@@ -6,6 +6,10 @@ module RedmineIssueUpdateStatistics
       base.send(:include, InstanceMethods)
       base.class_eval do
         before_action :prepare_field_stats, only: [:show]
+        before_action :validate_reason, only: [:update]
+
+        alias_method :update_issue_from_params_without_update_satisitics, :update_issue_from_params
+        alias_method :update_issue_from_params, :update_issue_from_params_with_update_satisitics
       end
     end
     
@@ -21,10 +25,16 @@ module RedmineIssueUpdateStatistics
 
       def generate_field_stats(issue)
         stats = []
-        # Load tracked fields for the issue's tracker, fall back to default
-        tracked_fields = Setting.plugin_redmine_issue_update_statistics['tracked_fields_by_tracker']&.dig(issue.tracker_id.to_s) ||
-                         Setting.plugin_redmine_issue_update_statistics['tracked_fields_by_tracker']&.dig('default') ||
-                         ['status_id', 'assigned_to_id']
+        tracked_fields = []
+
+        Array(Setting.plugin_redmine_issue_update_statistics['core_fields']).each do |field|
+          tracked_fields.push(field)
+        end
+        
+        Array(Setting.plugin_redmine_issue_update_statistics['custom_fields']).each do |field|
+          tracked_fields.push("custom_field_#{field}")
+        end
+
         journals = issue.journals.includes(:details, :user).order(created_on: :asc)
         issue_created = issue.created_on
         total_lifetime = (Time.now - issue_created).to_f / (60 * 60 * 24) # Days
@@ -34,27 +44,39 @@ module RedmineIssueUpdateStatistics
           field_name = field_name_for(field)
           current_value = issue.send(field) rescue issue.custom_field_values.detect { |cf| cf.custom_field.id.to_s == field.split('_').last }&.value
           last_change_time = issue_created
-
-          # Process journal details for this field
+          last_reason = 'Initial value'
+          has_journal = false
           journals.each do |journal|
             journal.details.each do |detail|
-              next unless detail.prop_key == field || (field.start_with?('custom_field_') && detail.prop_key == "custom_#{detail.custom_field_id}")
+              next unless detail.prop_key == field || (field.start_with?('custom_field_') && "custom_field_#{detail.prop_key}" == field)
+              
+              current_reason = last_reason
+              current_change_time = last_change_time
 
+              last_change_time = journal.updated_on
+              last_reason = journal.reason
+              
+              next if has_journal == false && detail.old_value.blank?
+
+              has_journal = true
               stats << {
                 field: field_name,
                 value: format_value(field, detail.old_value, issue),
+                reason: current_reason,
                 modified_by: journal.user&.name || 'Unknown',
-                modified_date: last_change_time,
-                lasted_for: distance_of_time_in_words(0,(journal.updated_on - last_change_time), include_seconds: true),
-                percentage: (((journal.updated_on - last_change_time) / (60 * 60 * 24)) / total_lifetime * 100).round(2)
+                modified_date: current_change_time,
+                lasted_for: distance_of_time_in_words(0,(journal.updated_on - current_change_time), include_seconds: true),
+                percentage: (((journal.updated_on - current_change_time) / (60 * 60 * 24)) / total_lifetime * 100).round(2)
               }
-              last_change_time = journal.updated_on
+              
             end
           end
 
+          next if has_journal == false && current_value.blank?
           stats << {
             field: field_name,
             value: format_value(field, current_value, issue),
+            reason: last_reason,
             modified_by: journals.last&.user&.name || issue.author&.name || 'Unknown',
             modified_date: last_change_time,
             lasted_for: distance_of_time_in_words(0,(Time.now - last_change_time), include_seconds: true),
@@ -64,7 +86,7 @@ module RedmineIssueUpdateStatistics
 
         end
         
-        stats.sort_by {|obj| obj[:modified_date] }.reverse
+        stats.sort_by {|obj| obj[:modified_date] }.reverse.sort_by {|obj| obj[:field] }
         
       end
 
@@ -89,6 +111,47 @@ module RedmineIssueUpdateStatistics
           value || 'None'
         else
           value || 'None'
+        end
+      end
+
+      def update_issue_from_params_with_update_satisitics
+        @issue.init_journal(User.current)
+        @issue.current_journal.reason = params[:reason]
+        update_issue_from_params_without_update_satisitics
+      end
+
+      def validate_reason
+        if params[:reason].blank?
+          has_tracked_field_updated = false
+          Array(Setting.plugin_redmine_issue_update_statistics['core_fields']).each do |f|            
+            old_val = @issue.send(f)
+            new_val = params[:issue] && params[:issue][f]
+            if old_val.to_s != new_val.to_s
+              has_tracked_field_updated = true
+              break
+            end
+          end
+          
+          unless has_tracked_field_updated
+            Array(Setting.plugin_redmine_issue_update_statistics['custom_fields']).each do |f|
+              old_val = @issue.custom_field_value(f.to_s)
+              new_val =  params[:issue] && params[:issue][:custom_field_values] && params[:issue][:custom_field_values][f.to_s]
+              if old_val.to_s != new_val.to_s
+                has_tracked_field_updated = true
+                break
+              end
+            end
+          end
+
+          if has_tracked_field_updated
+            @issue.safe_attributes =  params[:issue]
+
+            flash[:error].blank? ? flash[:error] =  "Reason is required" : flash[:error] << ' ' +  "Reason is required"            
+            #@issue.errors.add(:issue,"Reason is required")
+
+            redirect_back(fallback_location: edit_issue_path(@issue))            
+            
+          end
         end
       end
     end

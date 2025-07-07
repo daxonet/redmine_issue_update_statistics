@@ -1,22 +1,47 @@
-<div class="box">
-  <h3>Tracked Fields by Tracker</h3>
-  <% available_fields = [['Status', 'status_id'], ['Assignee', 'assigned_to_id']] + CustomField.where(type: 'IssueCustomField').map { |cf| [cf.name, "custom_field_#{cf.id}"] } %>
-  
-  <!-- Default Fields (used if no tracker-specific settings) -->
-  <p>
-    <%= label_tag 'settings[tracked_fields][default]', 'Default Tracked Fields' %>
-    <%= select_tag 'settings[tracked_fields][default][]',
-                   options_for_select(available_fields, @settings['tracked_fields']['default']),
-                   multiple: true, size: 5 %>
-  </p>
+<% 
 
-  <!-- Tracker-Specific Fields -->
-  <% Tracker.all.each do |tracker| %>
-    <p>
-      <%= label_tag "settings[tracked_fields][#{tracker.id}]", "Tracked Fields for #{tracker.name}" %>
-      <%= select_tag "settings[tracked_fields][#{tracker.id}][]",
-                     options_for_select(available_fields, @settings['tracked_fields'][tracker.id.to_s]),
-                     multiple: true, size: 5 %>
-    </p>
+settings['core_fields'] ||= []
+settings['custom_fields'] ||= []
+
+available_core_fields = [ 
+  {:name => "status_id", :label => l("field_status")} ,
+  {:name => "tracker_id", :label => l("field_tracker")} ,
+  {:name => "project_id", :label => l("field_project")} 
+]
+
+Tracker::CORE_FIELDS.each do |field|
+  available_core_fields.push({name: field, label: l("field_#{field}".delete_suffix('_id')) })
+end
+
+available_custom_fields = []
+
+@issue_custom_fields = IssueCustomField.sorted
+if @issue_custom_fields.present?
+  @issue_custom_fields.each do |field|
+    available_custom_fields.push({id: field.id, label: field.name})
+  end
+end
+
+%>
+
+<p>
+  <label><%= l(:field_core_fields) %></label>
+  <% available_core_fields.each do |field| %>
+  <label class="block">
+    <%= check_box_tag 'settings[core_fields][]', field[:name], settings['core_fields'].include?(field[:name]), :id => nil %>
+    <%= field[:label] %>
+  </label>
   <% end %>
-</div>
+</p>
+
+<% if available_custom_fields.present? %>
+<p>
+  <label><%= l(:label_custom_field_plural) %></label>
+  <% available_custom_fields.each do |field| %>
+    <label class="block">
+      <%= check_box_tag 'settings[custom_fields][]', field[:id].to_s, settings['custom_fields'].include?(field[:id].to_s), :id => nil %>
+      <%= field[:label] %>
+    </label>
+  <% end %>
+</p>
+<% end %>
