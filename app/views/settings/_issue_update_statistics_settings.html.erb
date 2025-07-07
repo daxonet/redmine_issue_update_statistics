@@ -1,0 +1,22 @@
+<div class="box">
+  <h3>Tracked Fields by Tracker</h3>
+  <% available_fields = [['Status', 'status_id'], ['Assignee', 'assigned_to_id']] + CustomField.where(type: 'IssueCustomField').map { |cf| [cf.name, "custom_field_#{cf.id}"] } %>
+  
+  <!-- Default Fields (used if no tracker-specific settings) -->
+  <p>
+    <%= label_tag 'settings[tracked_fields][default]', 'Default Tracked Fields' %>
+    <%= select_tag 'settings[tracked_fields][default][]',
+                   options_for_select(available_fields, @settings['tracked_fields']['default']),
+                   multiple: true, size: 5 %>
+  </p>
+
+  <!-- Tracker-Specific Fields -->
+  <% Tracker.all.each do |tracker| %>
+    <p>
+      <%= label_tag "settings[tracked_fields][#{tracker.id}]", "Tracked Fields for #{tracker.name}" %>
+      <%= select_tag "settings[tracked_fields][#{tracker.id}][]",
+                     options_for_select(available_fields, @settings['tracked_fields'][tracker.id.to_s]),
+                     multiple: true, size: 5 %>
+    </p>
+  <% end %>
+</div>

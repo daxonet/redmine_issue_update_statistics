@@ -1,0 +1,25 @@
+<h3>Property changes statistics</h3>
+<table class="list">
+  <thead>
+    <tr>
+      <th>Column</th>
+      <th>Value</th>
+      <th>Occured by</th>
+      <th>Occured on</th>
+      <th>Lasted for</th>
+      <th>%</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% stats_data.each do |stat| %>
+      <tr>
+        <td><%= h stat[:field] %></td>
+        <td><%= h stat[:value] %></td>
+        <td><%= h stat[:modified_by] %></td>
+        <td><%= format_datetime(stat[:modified_date]) %></td>
+        <td><%= stat[:lasted_for] %></td>
+        <td><%= stat[:percentage] %>%</td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
