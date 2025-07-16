@@ -7,7 +7,7 @@ module RedmineIssueUpdateStatistics
     end
     
     def validate_reason
-      return if current_journal.reason.present? || has_tracked_field_updated == false
+      return if current_journal.nil? || current_journal.reason.present? || has_tracked_field_updated == false
       errors.add :base, 'Reason cannot be blank'
     end  
 
