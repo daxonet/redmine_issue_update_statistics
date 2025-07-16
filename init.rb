@@ -17,3 +17,4 @@ end
 # Require necessary files
 require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/hooks'
 require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/issues_controller_patch'
+require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/issue_patch'

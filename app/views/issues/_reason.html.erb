@@ -1,18 +1,5 @@
-<p id="reason">
+<p id="field-change-reason">
   <label for="reason">Reason for change <span class="required">*</span></label>
   <textarea name="reason" id="reason" cols="60" rows="2"></textarea>
 </p>
 
-<script>
-  $(document).ready(function(){
-    var initialDueDate = $('#issue_due_date').val();
-    $('#issue_due_date').on('change', function(){
-      if($(this).val() !== initialDueDate){
-        $('#due-date-reason').show();
-      } else {
-        $('#due-date-reason').hide();
-        $('#due_date_reason').val('');
-      }
-    });
-  });
-</script>

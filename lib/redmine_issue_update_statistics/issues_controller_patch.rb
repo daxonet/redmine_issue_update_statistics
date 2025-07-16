@@ -6,7 +6,6 @@ module RedmineIssueUpdateStatistics
       base.send(:include, InstanceMethods)
       base.class_eval do
         before_action :prepare_field_stats, only: [:show]
-        before_action :validate_reason, only: [:update]
 
         alias_method :update_issue_from_params_without_update_satisitics, :update_issue_from_params
         alias_method :update_issue_from_params, :update_issue_from_params_with_update_satisitics
@@ -115,45 +114,10 @@ module RedmineIssueUpdateStatistics
       end
 
       def update_issue_from_params_with_update_satisitics
-        @issue.init_journal(User.current)
-        @issue.current_journal.reason = params[:reason]
         update_issue_from_params_without_update_satisitics
+        @issue.current_journal.reason = params[:reason]
       end
 
-      def validate_reason
-        if params[:reason].blank?
-          has_tracked_field_updated = false
-          Array(Setting.plugin_redmine_issue_update_statistics['core_fields']).each do |f|            
-            old_val = @issue.send(f)
-            new_val = params[:issue] && params[:issue][f]
-            if old_val.to_s != new_val.to_s
-              has_tracked_field_updated = true
-              break
-            end
-          end
-          
-          unless has_tracked_field_updated
-            Array(Setting.plugin_redmine_issue_update_statistics['custom_fields']).each do |f|
-              old_val = @issue.custom_field_value(f.to_s)
-              new_val =  params[:issue] && params[:issue][:custom_field_values] && params[:issue][:custom_field_values][f.to_s]
-              if old_val.to_s != new_val.to_s
-                has_tracked_field_updated = true
-                break
-              end
-            end
-          end
-
-          if has_tracked_field_updated
-            @issue.safe_attributes =  params[:issue]
-
-            flash[:error].blank? ? flash[:error] =  "Reason is required" : flash[:error] << ' ' +  "Reason is required"            
-            #@issue.errors.add(:issue,"Reason is required")
-
-            redirect_back(fallback_location: edit_issue_path(@issue))            
-            
-          end
-        end
-      end
     end
   end
 end
