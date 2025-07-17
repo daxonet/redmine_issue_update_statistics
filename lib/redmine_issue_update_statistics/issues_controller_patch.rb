@@ -5,19 +5,28 @@ module RedmineIssueUpdateStatistics
     def self.included(base)
       base.send(:include, InstanceMethods)
       base.class_eval do
-        before_action :prepare_field_stats, only: [:show]
-
+        
         alias_method :update_issue_from_params_without_update_satisitics, :update_issue_from_params
         alias_method :update_issue_from_params, :update_issue_from_params_with_update_satisitics
+
+        alias_method :issue_tab_without_update_satisitics, :issue_tab
+        alias_method :issue_tab, :issue_tab_with_update_satisitics
       end
     end
     
     include ActionView::Helpers::DateHelper
 
     module InstanceMethods
-      def prepare_field_stats
-        @issue = Issue.find(params[:id])
-        @stats_data = generate_field_stats(@issue)
+      
+      def issue_tab_with_update_satisitics
+        return render_error :status => 422 unless request.xhr?
+
+        if params[:name] == 'update_satisitics'
+          @stats_data = generate_field_stats(@issue)
+          render :partial => 'issues/update_satisitics', :locals => {:stats_data => @stats_data}
+        else
+          issue_tab_without_update_satisitics
+        end      
       end
 
       private

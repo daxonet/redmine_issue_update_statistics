@@ -24,8 +24,7 @@ module RedmineIssueUpdateStatistics
       end
 
       false
-    end
-    
+    end   
   end
 end
 
