@@ -1,3 +1,66 @@
-= redmine_issue_update_statistics
+= Redmine Issue Update Statistics
 
-Description goes here
+A Redmine plugin that tracks field change history on issues and requires a reason when modifying tracked fields.
+
+== Features
+
+* Track changes to configurable core fields (e.g., Status, Assignee) and custom fields
+* Require a "Reason" when updating tracked fields — via UI, API, or bulk update
+* View field change statistics in a dedicated tab on the issue page, including duration and percentage of issue lifetime per value
+* Admin settings page to configure which fields are tracked
+
+== Installation
+
+1. Clone this repository into your Redmine plugins directory:
+
+     cd /path/to/redmine/plugins
+     git clone https://github.com/daxonet/redmine_issue_update_statistics.git
+
+2. Run the database migration:
+
+     cd /path/to/redmine
+     bundle exec rake redmine:plugins:migrate RAILS_ENV=production
+
+3. Restart Redmine.
+
+== Configuration
+
+Go to *Administration > Plugins > Redmine Issue Update Statistics > Configure* to select which core fields and custom fields to track.
+
+== API Usage
+
+When updating an issue that changes tracked fields, include the +reason+ parameter. The reason can be passed either at the top level or inside the +issue+ hash.
+
+=== Single Issue Update
+
+  PUT /issues/123.json
+  Content-Type: application/json
+  X-Redmine-API-Key: YOUR_API_KEY
+
+  {
+    "issue": {
+      "status_id": 2
+    },
+    "reason": "Code review completed"
+  }
+
+Or with reason inside the issue hash:
+
+  {
+    "issue": {
+      "status_id": 2,
+      "reason": "Code review completed"
+    }
+  }
+
+=== Error Response
+
+If a tracked field is changed without providing a reason, the API returns a 422 error:
+
+  {"errors": ["Reason cannot be blank when changing tracked fields"]}
+
+If no tracked fields are changed, the reason is not required and validation is skipped.
+
+== License
+
+This plugin is released under the MIT License.
