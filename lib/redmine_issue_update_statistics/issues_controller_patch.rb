@@ -11,6 +11,9 @@ module RedmineIssueUpdateStatistics
 
         alias_method :issue_tab_without_update_satisitics, :issue_tab
         alias_method :issue_tab, :issue_tab_with_update_satisitics
+
+        alias_method :bulk_update_without_update_satisitics, :bulk_update
+        alias_method :bulk_update, :bulk_update_with_update_satisitics
       end
     end
     
@@ -18,6 +21,11 @@ module RedmineIssueUpdateStatistics
 
     module InstanceMethods
       
+      def bulk_update_with_update_satisitics
+        @issues.each { |issue| issue.update_reason = params[:reason] } if @issues
+        bulk_update_without_update_satisitics
+      end
+
       def issue_tab_with_update_satisitics
         return render_error :status => 422 unless request.xhr?
 
@@ -123,8 +131,11 @@ module RedmineIssueUpdateStatistics
       end
 
       def update_issue_from_params_with_update_satisitics
-        update_issue_from_params_without_update_satisitics
-        @issue.current_journal.reason = params[:reason]
+        result = update_issue_from_params_without_update_satisitics
+        reason = params[:reason] || (params[:issue] && params[:issue][:reason])
+        @issue.update_reason = reason
+        @issue.current_journal.reason = reason if @issue.current_journal
+        result
       end
 
     end
