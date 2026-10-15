@@ -2,3 +2,6 @@
 en:
   property_changes_statistics: "Property changes statistics"
   # my_label: "My label"
+
+  issue_statistics_agile_reason_prompt: "Reason for this board change (required):"
+  issue_statistics_agile_reason_required: "Board change canceled: a reason is required."
