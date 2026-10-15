@@ -2,7 +2,7 @@ Redmine::Plugin.register :redmine_issue_update_statistics do
   name 'Redmine Issue Update Statistics plugin'
   author 'LS MARK'
   description 'Show fields update statistics for the issues in issues page.'
-  version '0.0.1'
+  version '0.0.2'
   url 'https://daxonet.com'
   author_url 'https://daxonet.com/about'
 
