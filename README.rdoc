@@ -64,3 +64,18 @@ If no tracked fields are changed, the reason is not required and validation is s
 == License
 
 This plugin is released under the MIT License.
+
+== Agile board compatibility
+
+On the Agile board, changing a configured field prompts for a reason. Canceling or
+submitting whitespace restores the card without saving. The existing server-side
+validation still rejects requests without a reason, including direct requests.
+
+The plugin uses RedmineUP Agile's controller_agile_boards_update_before_save hook
+to attach the supplied reason to the issue and its current journal. The frontend
+handles only same-origin PUT requests to the Agile board. It does not grant
+permissions or change the role workflow, and does not modify RedmineUP source.
+
+Regression tests cover the hook plus helper composition. Browser acceptance must
+also cover successful drag, blank/canceled input, direct requests, ordinary issue
+editing, valid but forbidden workflow states, and member/nonmember permissions.

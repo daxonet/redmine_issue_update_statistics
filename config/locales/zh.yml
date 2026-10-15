@@ -1,0 +1,3 @@
+zh:
+  issue_statistics_agile_reason_prompt: "请填写此次看板变更原因（必填）："
+  issue_statistics_agile_reason_required: "看板变更已取消：必须填写变更原因。"

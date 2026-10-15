@@ -1,0 +1,12 @@
+<% if controller_name == 'agile_boards' && action_name == 'index' %>
+  <% statistics_settings = Setting.plugin_redmine_issue_update_statistics %>
+  <%= javascript_tag do %>
+    window.redmineIssueStatisticsAgileReason = <%= raw json_escape({
+      fields: Array(statistics_settings['core_fields']).map(&:to_s) +
+        Array(statistics_settings['custom_fields']).map { |id| "custom_field_#{id}" },
+      prompt: l(:issue_statistics_agile_reason_prompt),
+      required: l(:issue_statistics_agile_reason_required)
+    }.to_json) %>;
+  <% end %>
+  <%= javascript_include_tag 'agile_reason', plugin: 'redmine_issue_update_statistics' %>
+<% end %>

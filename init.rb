@@ -19,3 +19,4 @@ require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistic
 require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/issues_controller_patch'
 require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/issue_patch'
 require_dependency File.dirname(__FILE__) + '/lib/redmine_issue_update_statistics/issues_helper_patch'
+require_dependency File.dirname(__FILE__) + "/lib/redmine_issue_update_statistics/agile_hooks"
